@@ -1,7 +1,6 @@
 public class BinaryTree<E extends Comparable<E>>{
     private int size;
     private Node<E> root;
-    private Node<E> grandRoot;
 
     /**
      * Creates a BinaryTree with size = 0 and 
@@ -10,12 +9,10 @@ public class BinaryTree<E extends Comparable<E>>{
     public BinaryTree(){
         size = 0;
         root = null;
-        grandRoot = new Node<E>(root, null, root);
     }
     
     public BinaryTree(E val){
         add(val);
-        grandRoot = new Node<E>(root, null, root);
     }
 
     private static class Node<E>{
@@ -122,6 +119,7 @@ public class BinaryTree<E extends Comparable<E>>{
     public void add(E val){
         checkValNull(val);
         root = insert(root, val);
+        size++;
     }
 
     /**
@@ -147,6 +145,7 @@ public class BinaryTree<E extends Comparable<E>>{
                 //val > root.val, go right
                 node.setRight(insert(node.getRight(), val));
             }
+            //node is duplicate
         }
         return node;
     }
@@ -158,6 +157,7 @@ public class BinaryTree<E extends Comparable<E>>{
     public void remove(E val){
         checkValNull(val);
         root = removeRecur(root, val);
+        size--;
     }
 
     private Node<E> removeRecur(Node<E> current, E val){
@@ -212,7 +212,7 @@ public class BinaryTree<E extends Comparable<E>>{
      * @return the node with the given val or 
      * null if the that val is not in the tree
      */
-    public Node<E> get(E val){
+    public E get(E val){
         checkValNull(val);
         Node<E> temp = root;
         while (temp != null && temp.getValue() != val){
@@ -227,7 +227,7 @@ public class BinaryTree<E extends Comparable<E>>{
                 temp = temp.getRight();
             }
         }
-        return temp;
+        return temp.getValue();
     }
     
  
