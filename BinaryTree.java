@@ -14,8 +14,8 @@ public class BinaryTree<E extends Comparable<E>>{
     }
     
     public BinaryTree(E val){
+        add(val);
         grandRoot = new Node<E>(root, null, root);
-        add(root, val);
     }
 
     private static class Node<E>{
@@ -87,6 +87,24 @@ public class BinaryTree<E extends Comparable<E>>{
         private void setRight(Node<E> right){
             rightChild = right;
         }
+
+        private int numChildren(){
+            final int ZERO_CHILDREN = 0;
+            final int ONE_CHILD = 1;
+            final int TWO_CHILDREN = 2;
+            if(this.getRight() == null && this.getLeft() == null){
+                //no children
+                return ZERO_CHILDREN;
+            }
+            else if(this.getRight() == null ^ this.getLeft() == null){
+                //one child
+                return ONE_CHILD;
+            }
+            else{
+                //two children
+                return TWO_CHILDREN;
+            }
+        }
     }
 
     /**
@@ -103,75 +121,34 @@ public class BinaryTree<E extends Comparable<E>>{
      */
     public void add(E val){
         checkValNull(val);
-
-        if(size() == 0){
-            //this will be the root node
-            root = new Node<E>(val);
-            grandRoot.setLeft(root);
-            grandRoot.setRight(root);
-            size++; 
-        }
-        else if(get(val) == null){
-            //not the root node and not duplicate
-            //TODO: better way to check for duplicate val?
-            Node<E> temp = root;
-            boolean foundParent = false;
-            boolean left = false;
-            while(!foundParent){
-                //until fall out of tree
-                int comp = temp.getValue().compareTo(val);
-                if(comp > 0){
-                    // temp.val > val, go left
-                    if(temp.getLeft() == null){
-                        foundParent = true;
-                    }
-                    left = true;
-                }
-                else if(comp < 0){
-                    // temp.val < val, go right
-                    if(temp.getRight() == null){
-                        foundParent = true;
-                    }
-                    left = false;
-                }
-                
-                temp = left ? temp.getLeft(); t
-            }
-            //Link node
-            Node<E> newNode = new Node<E>(val);
-            if(left){
-                temp.setLeft(newNode);
-            }
-            else{
-                temp.setRight(newNode);
-            }
-            size++;
-        }
-        else{
-            System.out.println("Can't store duplicates");
-        }
+        root = insert(root, val);
     }
-    
-    public Node<E> add(Node<E> root, E val){
-        checkValNull(val);
 
-        if(root == null){
+    /**
+     * A function which inserts the given value into the
+     * tree
+     * @param root begins as root of tree, becomes nodes along the path to val
+     * @param val the value to be inserted into the tree
+     * @return 
+     */
+    private Node<E> insert(Node<E> node, E val){
+        if(node == null){
             //base case, make the new node
-            root = new Node<E>(val);
+            node = new Node<E>(val);
         }
         else{
             //recursive
-            int comp = root.getValue().compareTo(val);
+            int comp = node.getValue().compareTo(val);
             if(comp > 0){
                 //val < root.val, go left
-                root.setLeft(add(root.getLeft(), val));
+                node.setLeft(insert(node.getLeft(), val));
             }
             else{
                 //val > root.val, go right
-                root.setRight(add(root.getRight(), val));
+                node.setRight(insert(node.getRight(), val));
             }
         }
-        return root;
+        return node;
     }
 
     /**
@@ -180,73 +157,55 @@ public class BinaryTree<E extends Comparable<E>>{
      */
     public void remove(E val){
         checkValNull(val);
-    
-        Node<E> grandparent = getGrandparent(val);
-        boolean parentIsLeftChild = grandparent.getLeft().getValue() == val ? true : false;
-        //If the val is in left child of grandparent, parent is left child, right child otherwise
-        Node<E> parent = parentIsLeftChild ? grandparent.getLeft() : grandparent.getRight();
+        root = removeRecur(root, val);
+    }
 
-        if(parent.getLeft() == null && parent.getRight() == null){
-            //no children
-            parent = null;
-        }
-        else if(parent.getLeft() != null ^ parent.getRight() != null){
-            //one child
-            //set parent to its child
-            parent = parent.getLeft() == null ? parent.getRight() : parent.getLeft();
-            //set grandparent's child to new parent
-            LinkGrandToCorrectChild(parentIsLeftChild, grandparent, parent, parent);
+    private Node<E> removeRecur(Node<E> current, E val){
+        if(current == null){
+            //root is null, tree is empty
+            return current;
         }
         else{
-            //two children
-            int comp = parent.getValue().compareTo(root.getValue());
-            if(comp < 0){
-                //left case
-                Node<E> rightChild = parent.getRight();
-                Node<E> leftChild = parent.getLeft();
-                parent = rightChild;
-                while(parent.getLeft() != null){
-                    //until bottom is found
-                    parent = parent.getLeft();
-                }
-                parent.setLeft(rightChild);
-                LinkGrandToCorrectChild(parentIsLeftChild, grandparent, leftChild, rightChild);
+            //recur down tree
+            int comp = current.getValue().compareTo(val);
+            if(comp > 0){
+                //val < current.val, go left
+                current.setLeft(removeRecur(current.getLeft(), val));
+            }
+            else if(comp < 0){
+                //val > current.val, go right
+                current.setRight(removeRecur(current.getRight(), val));
             }
             else{
-                //right and root
-                //TODO: refactor these declarations?
-                Node<E> rightChild = parent.getRight();
-                Node<E> leftChild = parent.getLeft();
-                parent = leftChild;
-                while(parent.getRight() != null){
-                    //until bottom is found
-                    parent = parent.getRight();
+                //val == current.val, remove node
+                switch(current.numChildren()){
+                    case 0:
+                        //no children; make this node empty
+                        current = null;
+                        break;
+                    case 1:
+                        //one child; make this node the child node
+                        current = current.getLeft() == null ? current.getRight() : current.getLeft();
+                        break;
+                    case 2:
+                        //two children; change this node to next in order
+                        Node<E> temp = current.getRight();
+                        while(temp.getLeft() != null){
+                            //until leftmost leaf is found
+                            temp = temp.getLeft();
+                        }
+                        //set
+                        current.setValue(temp.getValue());
+                        //remove extraneous node
+                        current.setRight(removeRecur(current.getRight(), temp.getValue()));
+                        break;
                 }
-                parent.setRight(rightChild);
-                LinkGrandToCorrectChild(parentIsLeftChild, grandparent, leftChild, rightChild);
+                
             }
-        }
-        size--;
-    }
-
-    /**
-     * Method that relinks the original grandparent with the new parent (old left or right child)
-     * @param whichChild is true if the new parent should be on left, false if right
-     * @param grand the grandparent node
-     * @param left the left child of the node to be removed
-     * @param right the right child of the node to be removed
-     */
-    private void LinkGrandToCorrectChild(boolean whichChild, Node<E> grand, Node<E> left, Node<E> right){
-        if(whichChild){
-            //left child is the parent
-            grand.setLeft(left);
-        }
-        else{
-            //right child is the parent
-            grand.setRight(right);
+            return current;
         }
     }
-     
+    
     /**
      * Finds the given node with the given val in the tree
      * @param val the value being searched for
@@ -271,28 +230,6 @@ public class BinaryTree<E extends Comparable<E>>{
         return temp;
     }
     
-    /**
-     * Gets the node before the one with the given val
-     * @param val the value to search for
-     */
-    private Node<E> getGrandparent(E val){
-        Node <E> temp = grandRoot;
-        boolean foundParentVal = temp.getLeft().getValue() == val || temp.getRight().getValue() == val;
-        while(temp != null && !foundParentVal){
-                //until the parentVal is found, or not found (should always be found)
-            int comp = temp.getValue().compareTo(val);
-            if(comp > 0){
-                // temp.val > val, go left
-                temp = temp.getLeft();
-            }
-            else if(comp < 0){
-                // temp.val < val, go right
-                temp = temp.getRight();
-            }
-        }
-        //grandparent found
-        return temp;
-    }
  
     /**
      * Creates a preOrder string of the elements in the tree
