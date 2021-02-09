@@ -2,6 +2,8 @@
 public class Interface {
     public static void main(String[] args){
         test();
+        System.out.println();
+        stressTest();
     }
 
     public static void test(){
@@ -31,5 +33,16 @@ public class Interface {
         }
 
 
+    }
+
+    public static void stressTest(){
+        BinaryTree<Integer> tree = new BinaryTree<Integer>();
+        int runfor = 10000000;
+        System.out.println("Adding and removing " + runfor + " times");
+        for(int i = 0; i < runfor; i++){
+            tree.add(i);
+            tree.remove(i);
+        }
+        System.out.println("Done.");
     }
 }
