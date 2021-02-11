@@ -215,7 +215,7 @@ public class BinaryTree<E extends Comparable<E>>{
     public E get(E val){
         checkValNull(val);
         Node<E> temp = root;
-        while (temp != null && temp.getValue() != val){
+        while (temp != null && !temp.getValue().equals(val)){
             // until the proper child is found or fell out of tree
             int comp = temp.getValue().compareTo(val);
             if(comp > 0){
